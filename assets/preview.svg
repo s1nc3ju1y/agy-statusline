@@ -52,9 +52,9 @@
 
   <!-- Preset 1: Detailed -->
   <rect x="32" y="66" width="1056" height="74" class="card"/>
-  <rect x="46" y="78" width="218" height="20" rx="4" fill="#1e3a5f"/>
-  <text x="56" y="92" class="badge cyan">/statusline 详细  |  detailed</text>
-  <text x="276" y="92" class="mono muted">Full Telemetry + 5h &amp; Weekly Quota Reset Countdown</text>
+  <rect x="46" y="78" width="170" height="20" rx="4" fill="#1e3a5f"/>
+  <text x="56" y="92" class="badge cyan">/statusline detailed</text>
+  <text x="228" y="92" class="mono muted">Full Telemetry + 5h &amp; Weekly Quota Reset Countdown</text>
   <text x="46" y="124" class="mono">
     <tspan class="text bold">Gemini 4 Argon</tspan>
     <tspan class="muted"> (High) · </tspan>
@@ -77,9 +77,9 @@
 
   <!-- Preset 2: Standard -->
   <rect x="32" y="154" width="1056" height="74" class="card"/>
-  <rect x="46" y="166" width="292" height="20" rx="4" fill="#1e3f2f"/>
-  <text x="56" y="180" class="badge green">/statusline 标准  |  standard (Default)</text>
-  <text x="350" y="180" class="mono muted">Balanced Daily Driver — Native Info + Context Bar + Cache% + Cost + Speed</text>
+  <rect x="46" y="166" width="246" height="20" rx="4" fill="#1e3f2f"/>
+  <text x="56" y="180" class="badge green">/statusline standard (Default)</text>
+  <text x="304" y="180" class="mono muted">Balanced Daily Driver — Native Info + Context Bar + Cache% + Cost + Speed</text>
   <text x="46" y="212" class="mono">
     <tspan class="text bold">Gemini 4 Argon</tspan>
     <tspan class="muted"> (High) · </tspan>
@@ -99,9 +99,9 @@
 
   <!-- Preset 3: Minimal -->
   <rect x="32" y="242" width="1056" height="74" class="card"/>
-  <rect x="46" y="254" width="218" height="20" rx="4" fill="#3b2e1e"/>
-  <text x="56" y="268" class="badge gold">/statusline 简洁  |  minimal</text>
-  <text x="276" y="268" class="mono muted">Ultra-Compact Mode for Narrow Split Panes</text>
+  <rect x="46" y="254" width="160" height="20" rx="4" fill="#3b2e1e"/>
+  <text x="56" y="268" class="badge gold">/statusline minimal</text>
+  <text x="218" y="268" class="mono muted">Ultra-Compact Mode for Narrow Split Panes</text>
   <text x="46" y="300" class="mono">
     <tspan class="text bold">Gemini 4 Argon</tspan>
     <tspan class="muted"> (H) · </tspan>
@@ -122,17 +122,17 @@
   <rect x="32" y="332" width="1056" height="62" class="cmdbox"/>
   <text x="50" y="357" class="mono">
     <tspan class="cyan bold">❯ /statusline </tspan>
-    <tspan class="text bold">详细</tspan>
+    <tspan class="text bold">detailed</tspan>
     <tspan class="muted">     # Instant 0ms switch inside agy:  </tspan>
     <tspan class="gold">off</tspan>
     <tspan class="muted">  │  </tspan>
-    <tspan class="green">简洁 / minimal</tspan>
+    <tspan class="green">minimal</tspan>
     <tspan class="muted">  │  </tspan>
-    <tspan class="cyan">标准 / standard</tspan>
+    <tspan class="cyan">standard</tspan>
     <tspan class="muted">  │  </tspan>
-    <tspan class="yellow">详细 / detailed</tspan>
+    <tspan class="yellow">detailed</tspan>
   </text>
   <text x="50" y="380" class="mono muted">
-    ✓ Replaces built-in top-right statusline cleanly (stack_with_default: false) · Zero dependencies (Python 3 stdlib) · Incremental SQLite cache (&lt;15ms)
+    Replaces built-in statusline (stack_with_default: false) · Zero dependencies (Python 3 stdlib) · Incremental SQLite cache (&lt;15ms)
   </text>
 </svg>

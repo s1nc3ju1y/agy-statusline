@@ -1,76 +1,69 @@
-<div align="center">
+# agy-statusline
 
-# 🚀 agy-statusline
+Unified HUD statusline for Google Antigravity CLI (`agy`).  
+Visual context progress bar, session-level token and cache telemetry, equivalent API cost, live generation speed, and quota countdowns in a single clean line.
 
-**Unified HUD Statusline for Google Antigravity CLI (`agy`)**  
-*Visual Context Bar · Session Token & Cache Telemetry · Equivalent API Cost · Live `tok/s` Speed · 5h & Weekly Quota*
+[English](README.md) | [简体中文](README_CN.md)
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Stdlib%20Only)-2ea44f)](#)
 [![Latency](https://img.shields.io/badge/Render%20Time-%3C15ms-00b4d8)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-<img src="./assets/preview.svg" alt="agy-statusline HUD Preview" width="100%" />
-
-[**中文说明**](#-核心特性-features) · [**Quick Start**](#-一键安装-quick-install) · [**Presets & `/statusline` Switching**](#-四档模式切换-bilingual-preset-switching) · [**Architecture**](#-工作原理-architecture)
-
-</div>
+![agy-statusline HUD Preview](./assets/preview.svg)
 
 ---
 
-## ✨ 核心特性 (Features)
+## Features
 
-`agy-statusline` 是专为 **Google Antigravity CLI (`agy`)** 打造的一体化 HUD 状态栏插件，**零第三方依赖**（纯 Python 3 标准库），默认完全替代右上角原生状态栏（`stack_with_default: false`），将分散的状态信息与底层 SQLite 遥测浓缩为清爽的单行 HUD：
+`agy-statusline` replaces the default top-right statusline with an integrated, single-line HUD rendered directly in the terminal bottom bar (`stack_with_default: false`). Built with standard Python 3 libraries, it introduces zero third-party dependencies and adds less than 15ms overhead per refresh.
 
-1. **🎯 融入原生状态栏信息 (Native Status Integration)**
-   - 完整保留模型与推理强度徽标（如 `Gemini 4 Argon (High)`）、运行模式（`accept-edits` / `plan` / `auto` / `best-of-n`）、Vim 模式（`-- INSERT --`）、Git 分支与脏工作区标记（`⎇ main*`）以及活跃子 Agent / 后台任务计数。
-2. **📊 HUD 可视化上下文进度条 (`CTX`)**
-   - 1/8 字符精度 Unicode 进度条（`▏▎▍▌▋▊▉█`），支持四级颜色动态告警（`<50%` 绿、`50–75%` 黄、`75–90%` 橙、`≥90%` 红 + `⚠` 标记）。
-3. **💰 会话级 Token 总量、Cache 命中率与等效 API 成本 (`Σ / 💰`)**
-   - 直接增量解析 `~/.gemini/antigravity-cli/conversations/<id>.db` 中的 `gen_metadata` Protobuf 帧（并自动汇总 `conversation_summaries.db` 关联的子 Agent 开销），展示会话 **总 Token (`Σ`)**、**缓存命中率 (`Cache XX%`)** 与 **等效 API 美元花费 (`💰 $X.XX`)**。
-4. **⚡ 实时 Token 生成速度 (`⚡ tok/s`)**
-   - 精确提取每轮 `time_to_first_token` 与 `streaming_duration`，实时展示最新一轮 Token 吞吐速度（`⚡ X.X tok/s`）与运行态指示（`⟳`）。
-5. **🔋 5h Quota & Weekly Quota 实时监控 (`detailed` / `详细` 档位)**
-   - 自动按当前模型家族匹配 `gemini-5h` / `gemini-weekly` 或 `3p-5h` / `3p-weekly`（Claude / GPT-OSS）配额池，直观展示剩余百分比与重置倒计时（如 `Quota 5h:77%(29m) Wk:89%(6d14h)`）。
+- **Native Status Integration**: Retains model name, reasoning effort (e.g., `Gemini 4 Argon (High)`), cycle mode (`accept-edits`, `plan`, `auto`, `best-of-n`), Vim mode (`-- INSERT --`), Git branch with dirty indicator (`⎇ main*`), and active subagent/task counts.
+- **High-Precision Context Progress Bar (`CTX`)**: 1/8-cell Unicode fractional block elements (`▏▎▍▌▋▊▉█`) with 4-tier dynamic color thresholds (`<50%` green, `50-75%` yellow, `75-90%` orange, `>=90%` red with `⚠`).
+- **Session Token Usage, Cache Hit Ratio & Cost (`Σ / 💰`)**: Reads `gen_metadata` protobuf frames from `~/.gemini/antigravity-cli/conversations/<id>.db` incrementally and aggregates child subagents from `conversation_summaries.db`. Displays session total tokens (`Σ`), cache hit ratio (`Cache XX%`), and equivalent API USD cost (`💰 $X.XX`).
+- **Live Generation Speed (`⚡ tok/s`)**: Computes latest turn output throughput from TTFT and streaming duration (`⚡ X.X tok/s`) with an active execution spinner (`⟳`).
+- **5h & Weekly Quota Countdown (`detailed` preset)**: Automatically selects quota buckets matching the active model family (`gemini-5h` / `gemini-weekly` or `3p-5h` / `3p-weekly` for Claude / GPT-OSS) and displays remaining percentage and reset countdowns (e.g., `Quota 5h:77%(29m) Wk:89%(6d14h)`).
 
 ---
 
-## 🎛️ 四档模式切换 (Bilingual Preset Switching)
+## Presets & Switching
 
-安装后无需记忆复杂参数，直接在 `agy` 输入框中使用内置的 **`/statusline`** 命令即可 **0ms 瞬时切换**（支持中英文双语，不触发 AI 对话）：
+Four runtime modes are supported. You can switch presets instantly inside `agy` using the native `/statusline` command (0ms latency, no LLM invocation required). Both English and Chinese commands are supported out of the box:
 
-| 命令 (中文) | Command (English) | 档位说明 (Description) | 显示内容示例 (Example Output) |
+| Command (English) | Command (Chinese) | Mode | Example Output |
 | :--- | :--- | :--- | :--- |
-| `/statusline off` | `/statusline off` | **关闭状态栏** (Disable) | *(隐藏状态栏)* |
-| `/statusline 简洁` | `/statusline minimal` | **简洁模式** (Minimal) | `Gemini 4 Argon (H) · plan │ CTX [██████▌░] 81% │ Σ 640k · 💰 $0.42 │ ⚡ 45.0 tok/s` |
-| `/statusline 标准` | `/statusline standard` | **标准模式** (Default) | `Gemini 4 Argon (High) · auto · ⎇ main* │ CTX [██▍░░░░░░░] 23.4% (245k/1.05M) │ Σ 12.4M (Cache 96%) · 💰 $7.48 │ ⚡ 42.8 tok/s` |
-| `/statusline 详细` | `/statusline detailed` | **详细模式** (+Quota) | 在 `标准` 基础上追加 `│ Quota 5h:77%(29m) Wk:89%(6d14h)` |
+| `/statusline off` | `/statusline off` | **Disabled** | *(Hides statusline)* |
+| `/statusline minimal` | `/statusline 简洁` | **Minimal** | `Gemini 4 Argon (H) · plan │ CTX [██████▌░] 81% │ Σ 640k · 💰 $0.42 │ ⚡ 45.0 tok/s` |
+| `/statusline standard` | `/statusline 标准` | **Standard** (Default) | `Gemini 4 Argon (High) · auto · ⎇ main* │ CTX [██▍░░░░░░░] 23.4% (245k/1.05M) │ Σ 12.4M (Cache 96%) · 💰 $7.48 │ ⚡ 42.8 tok/s` |
+| `/statusline detailed` | `/statusline 详细` | **Detailed** (+Quota) | Appends `│ Quota 5h:77%(29m) Wk:89%(6d14h)` to standard mode |
 
 ---
 
-## 📦 一键安装 (Quick Install)
+## Installation
 
-### 方式一（主力推荐）：在 `agy` 内使用 `/plugin` 直接安装 (Native `/plugin` Install)
+### Method 1 (Recommended): Native `/plugin` Command
 
-直接在 `agy` 对话框中输入内置的 `/plugin` 命令（或在终端执行 `agy plugin install`），插件内置的 `hooks.json` 会在会话启动/执行时**全自动完成状态栏挂载与中英双语档位注册**：
+Inside `agy`, run:
 
 ```text
 /plugin install https://github.com/s1nc3ju1y/agy-statusline
 ```
 
-或者在终端直接运行：
+Or from your shell:
 
 ```bash
 agy plugin install https://github.com/s1nc3ju1y/agy-statusline
 ```
 
-### 方式二：单行脚本安装 (Shell One-Liner)
+The plugin includes `hooks.json`, which automatically configures `settings.json` and installs the bilingual preset wrappers into `~/.local/bin` on startup.
+
+### Method 2: Shell One-Liner
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/s1nc3ju1y/agy-statusline/main/install.sh | bash
 ```
 
-### 方式三：克隆仓库安装 (Git Clone)
+### Method 3: Clone & Install
 
 ```bash
 git clone https://github.com/s1nc3ju1y/agy-statusline.git
@@ -78,28 +71,28 @@ cd agy-statusline
 python3 agy_statusline.py --install
 ```
 
-> [!TIP]
-> 确保 `~/.local/bin` 在你的 `$PATH` 中（`agy` 默认安装路径即为 `~/.local/bin`），这样 `/statusline 简洁|标准|详细` 与 `/statusline minimal|standard|detailed` 即可直接在 `agy` 内生效。
+> [!NOTE]
+> Ensure `~/.local/bin` is in your `$PATH` (the default installation directory for `agy`). This allows `/statusline minimal | standard | detailed` (and `/statusline 简洁 | 标准 | 详细`) to execute directly.
 
-### 常用命令行参数 (CLI Options)
+### CLI Options
 
 ```bash
-# 预览三种预设渲染效果 (Preview all 3 presets in terminal)
+# Preview all three presets in terminal
 python3 agy_statusline.py --demo
 
-# 安装并默认启用详细模式 (Install with detailed preset by default)
+# Install and enable detailed preset by default
 python3 agy_statusline.py --install --preset detailed
 
-# 在 standard -> detailed -> minimal 之间循环切换 (Cycle presets)
+# Cycle presets (standard -> detailed -> minimal)
 python3 agy_statusline.py --cycle
 
-# 卸载并恢复默认设置 (Uninstall and clean up wrappers)
+# Uninstall and restore default statusline
 python3 agy_statusline.py --uninstall
 ```
 
 ---
 
-## 🏗️ 工作原理 (Architecture)
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -109,12 +102,12 @@ flowchart LR
     B -- "ANSI Single-Line HUD" --> A
 ```
 
-- **增量缓存 (`<15ms`)**：每次刷新仅查询 SQLite `gen_metadata` 表中 `idx > max_idx` 的新增轮次，缓存在 `/tmp/agy-statusline-<uid>/`，对大长会话依然保持毫秒级响应。
-- **永不报错退出**：任何异常或空输入均优雅降级，保证返回码为 `0`，避免触发 `agy` 的自动禁用机制。
+- **Incremental SQLite Cache**: Reads only rows where `idx > max_idx` and caches state under `/tmp/agy-statusline-<uid>/`.
+- **Fault-Tolerant Execution**: Any parse failure or empty input gracefully falls back to a clean placeholder and always exits with code `0`, preventing `agy` from auto-disabling the statusline.
 
 ---
 
-## 🧪 运行测试 (Testing)
+## Testing
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -122,6 +115,6 @@ python3 -m unittest discover -s tests -v
 
 ---
 
-## 📄 License
+## License
 
-Released under the [MIT License](./LICENSE). Built with ❤️ and **Gemini 4 Argon** inside **Antigravity CLI**.
+Released under the [MIT License](./LICENSE). Built for Google Antigravity CLI (`agy`).
