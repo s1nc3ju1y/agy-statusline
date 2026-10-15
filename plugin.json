@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "agy-statusline",
+  "description": "Unified HUD statusline for Antigravity CLI with visual context bar, session token/cache/cost telemetry, tok/s speed, 5h/weekly quota, and /statusline (off | 简洁 | 标准 | 详细) switching."
+}
