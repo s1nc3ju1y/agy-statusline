@@ -671,6 +671,34 @@ class TestCLIIntegration(unittest.TestCase):
             for wrapper_name in all_wrappers:
                 self.assertFalse((bin_dir / wrapper_name).exists())
 
+            # 2e. Test --hook-bootstrap auto-configures unconfigured settings and respects /statusline off
+            sl.run_hook_bootstrap(
+                settings_path=settings_file,
+                script_path=script,
+                bin_dir=bin_dir,
+            )
+            boot_cfg = json.loads(settings_file.read_text(encoding="utf-8"))
+            self.assertTrue(boot_cfg["statusLine"]["enabled"])
+            self.assertFalse(boot_cfg["statusLine"]["stack_with_default"])
+            for wrapper_name in all_wrappers:
+                self.assertTrue((bin_dir / wrapper_name).is_file())
+
+            # Simulate user running `/statusline off` and verify --hook-bootstrap respects it
+            settings_file.write_text(
+                json.dumps({"statusLine": {"type": "command", "command": "标准", "enabled": False}}),
+                encoding="utf-8",
+            )
+            res_hook = subprocess.run(
+                [sys.executable, str(script), "--hook-bootstrap", "--settings-path", str(settings_file)],
+                input='{"conversationId": "c1"}',
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertEqual(res_hook.stdout.strip(), "{}")
+            after_off = json.loads(settings_file.read_text(encoding="utf-8"))
+            self.assertFalse(after_off["statusLine"]["enabled"])
+
             # 3. Test malformed stdin never exits non-zero
             res_bad = subprocess.run(
                 [sys.executable, str(script)],

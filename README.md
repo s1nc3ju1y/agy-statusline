@@ -50,13 +50,27 @@
 
 ## 📦 一键安装 (Quick Install)
 
-### 方式一：单行脚本安装 (One-Liner)
+### 方式一（主力推荐）：在 `agy` 内使用 `/plugin` 直接安装 (Native `/plugin` Install)
+
+直接在 `agy` 对话框中输入内置的 `/plugin` 命令（或在终端执行 `agy plugin install`），插件内置的 `hooks.json` 会在会话启动/执行时**全自动完成状态栏挂载与中英双语档位注册**：
+
+```text
+/plugin install https://github.com/s1nc3ju1y/agy-statusline
+```
+
+或者在终端直接运行：
+
+```bash
+agy plugin install https://github.com/s1nc3ju1y/agy-statusline
+```
+
+### 方式二：单行脚本安装 (Shell One-Liner)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/s1nc3ju1y/agy-statusline/main/install.sh | bash
 ```
 
-### 方式二：克隆仓库安装 (Git Clone)
+### 方式三：克隆仓库安装 (Git Clone)
 
 ```bash
 git clone https://github.com/s1nc3ju1y/agy-statusline.git

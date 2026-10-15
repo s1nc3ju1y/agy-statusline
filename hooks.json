@@ -1,0 +1,18 @@
+{
+  "agy-statusline-bootstrap": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python3 ./agy_statusline.py --hook-bootstrap",
+        "timeout": 5
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "python3 ./agy_statusline.py --hook-bootstrap",
+        "timeout": 5
+      }
+    ]
+  }
+}

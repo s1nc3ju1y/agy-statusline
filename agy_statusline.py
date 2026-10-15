@@ -462,7 +462,7 @@ def resolve_app_data_dir(stdin_data: dict[str, Any]) -> Path:
     if env_dir:
         return Path(env_dir).expanduser()
 
-    transcript = stdin_data.get("transcript_path") or ""
+    transcript = stdin_data.get("transcript_path") or stdin_data.get("transcriptPath") or ""
     if transcript:
         p = Path(transcript)
         # Typically <appDataDir>/brain/<conv_id>/.system_generated/logs/transcript.jsonl
@@ -1215,7 +1215,7 @@ def ensure_standalone_in_settings(settings_path: Path) -> None:
 def install_preset_wrappers(
     bin_dir: Path, script_path: Path, uninstall: bool = False
 ) -> None:
-    """Install or remove `简洁`, `标准`, `详细` wrappers in `bin_dir` for `/statusline <档位>`."""
+    """Install or remove bilingual wrappers (`简洁/minimal`, `标准/standard`, `详细/detailed`) in `bin_dir`."""
     if not bin_dir.is_dir():
         return
     resolved_script = script_path.resolve().as_posix()
@@ -1238,7 +1238,10 @@ def install_preset_wrappers(
         else:
             try:
                 target.write_text(
-                    f'#!/usr/bin/env bash\nexec python3 "{resolved_script}" --preset {preset_key} "$@"\n',
+                    "#!/usr/bin/env bash\n"
+                    f'SCRIPT="{resolved_script}"\n'
+                    f'[ -f "$SCRIPT" ] && exec python3 "$SCRIPT" --preset {preset_key} "$@"\n'
+                    "exit 0\n",
                     encoding="utf-8",
                 )
                 target.chmod(0o755)
@@ -1302,6 +1305,73 @@ def configure_settings(
         install_preset_wrappers(target_bin, script_path, uninstall=uninstall)
 
     return data
+
+
+def run_hook_bootstrap(
+    settings_path: Path,
+    script_path: Path,
+    bin_dir: Path | None = None,
+) -> None:
+    """Idempotent bootstrap triggered by `hooks.json` when installed via `/plugin install`.
+
+    Automatically configures `settings.json` and installs `~/.local/bin` preset wrappers
+    on first run without overwriting user-chosen presets or `/statusline off`.
+    """
+    default_settings = resolve_app_data_dir({}) / "settings.json"
+    target_bin = bin_dir
+    if target_bin is None and settings_path.resolve() == default_settings.resolve():
+        target_bin = Path.home() / ".local" / "bin"
+
+    needs_wrappers = False
+    if target_bin is not None and target_bin.is_dir():
+        for name in PRESET_WRAPPERS:
+            w_path = target_bin / name
+            if not w_path.is_file():
+                needs_wrappers = True
+                break
+            try:
+                txt = w_path.read_text(encoding="utf-8")
+                m = re.search(r'SCRIPT="([^"]+)"', txt)
+                if not m or not Path(m.group(1)).is_file():
+                    needs_wrappers = True
+                    break
+            except Exception:
+                needs_wrappers = True
+                break
+
+    already_configured = False
+    if settings_path.is_file():
+        try:
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+            sl_cfg = data.get("statusLine")
+            if isinstance(sl_cfg, dict):
+                if sl_cfg.get("enabled") is False:
+                    # User explicitly ran `/statusline off`; respect their choice
+                    already_configured = True
+                else:
+                    cmd = str(sl_cfg.get("command") or "").strip()
+                    if cmd in PRESET_WRAPPERS:
+                        already_configured = True
+                    elif "agy_statusline.py" in cmd:
+                        # Verify the referenced script path still exists
+                        parts = cmd.split()
+                        py_paths = [p for p in parts if p.endswith("agy_statusline.py")]
+                        if py_paths and Path(py_paths[0]).is_file():
+                            already_configured = True
+        except Exception:
+            pass
+
+    if not already_configured:
+        configure_settings(
+            settings_path=settings_path,
+            script_path=script_path,
+            preset=detect_current_preset(settings_path),
+            bin_dir=target_bin,
+        )
+    else:
+        ensure_standalone_in_settings(settings_path)
+        if needs_wrappers and target_bin is not None:
+            install_preset_wrappers(target_bin, script_path, uninstall=False)
 
 
 def run_demo(app_data_dir: Path) -> None:
@@ -1407,6 +1477,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Remove custom statusline from ~/.gemini/antigravity-cli/settings.json",
     )
     parser.add_argument(
+        "--hook-bootstrap",
+        action="store_true",
+        help="Idempotent lifecycle hook bootstrap for `/plugin install` (outputs `{}` JSON)",
+    )
+    parser.add_argument(
         "--stack",
         action="store_true",
         help="When used with --install, set stack_with_default=true to stack alongside the built-in statusline",
@@ -1428,6 +1503,24 @@ def main(argv: list[str] | None = None) -> int:
         help="Render a preview of the HUD statusline across all 3 presets",
     )
     args = parser.parse_args(argv)
+
+    if args.hook_bootstrap:
+        try:
+            raw_hook = sys.stdin.read().strip()
+            hook_data = json.loads(raw_hook) if raw_hook else {}
+            if not isinstance(hook_data, dict):
+                hook_data = {}
+        except Exception:
+            hook_data = {}
+        app_data_dir = resolve_app_data_dir(hook_data)
+        settings_path = args.settings_path or (app_data_dir / "settings.json")
+        try:
+            run_hook_bootstrap(settings_path=settings_path, script_path=Path(__file__))
+        except Exception:
+            pass
+        sys.stdout.write("{}\n")
+        sys.stdout.flush()
+        return 0
 
     app_data_dir = resolve_app_data_dir({})
     settings_path = args.settings_path or (app_data_dir / "settings.json")
